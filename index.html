@@ -8,14 +8,23 @@
       <link rel="stylesheet" href="dist/luckysheet.css" />
       <script src="dist/xlsx.js"></script>
       <script src="dist/luckysheet.js"></script>
+      <style>
+         html,
+         body {
+            height: 100%;
+            margin: 0;
+         }
+      </style>
    </head>
 
    <body>
-      <div style="display: flex; justify-content: center">
-         <button onclick="xlsxExport()">Export</button>
+      <div style="display: flex; flex-flow: column; height: 100%">
+         <br />
+         <div style="display: flex; justify-content: center">
+            <button onclick="xlsxExport()">Export</button>
+         </div>
+         <div id="luckysheet" style="margin: 40px; flex-grow: 1" />
       </div>
-      <br />
-      <div id="luckysheet" style="margin: auto; width: 1000px; height: 500px" />
    </body>
 
    <script>
@@ -26,18 +35,27 @@
             '[{"name":"John Doe","age":30,"email":"johndoe@example.com","street":"123 Main St","city":"Anytown","state":"CA","zip":"12345","home_phone":"555-555-1234"},{"name":"Jane Smith","age":25,"email":"janesmith@example.com","street":"456 Oak St","city":"Othertown","state":"NY","zip":"67890","home_phone":"555-555-5678"},{"name":"Alice Johnson","age":35,"email":"alicejohnson@example.com","street":"789 Pine St","city":"Sometown","state":"TX","zip":"11223","home_phone":"555-555-9012"},{"name":"Bob Brown","age":40,"email":"bobbrown@example.com","street":"321 Maple St","city":"Thistown","state":"FL","zip":"33445","home_phone":"555-555-3456"},{"name":"Charlie Davis","age":28,"email":"charliedavis@example.com","street":"654 Elm St","city":"Yourtown","state":"IL","zip":"55667","home_phone":"555-555-7890"},{"name":"David Wilson","age":32,"email":"davidwilson@example.com","street":"987 Cedar St","city":"Mytown","state":"PA","zip":"77889","home_phone":"555-555-1235"},{"name":"Eve Martinez","age":29,"email":"evemartinez@example.com","street":"654 Spruce St","city":"Hertown","state":"GA","zip":"99001","home_phone":"555-555-6789"},{"name":"Frank White","age":45,"email":"frankwhite@example.com","street":"321 Birch St","city":"Theirtown","state":"NC","zip":"11234","home_phone":"555-555-2345"},{"name":"Grace Lee","age":27,"email":"gracelee@example.com","street":"987 Willow St","city":"Ourtown","state":"OH","zip":"55678","home_phone":"555-555-8901"},{"name":"Henry King","age":33,"email":"henryking@example.com","street":"123 Redwood St","city":"Thattown","state":"MI","zip":"99012","home_phone":"555-555-3457"}]',
       };
       const sheets = Object.entries(data_json).map(([name, value]) => [name, JSON.parse(value)]);
-      const data = sheets.map(([name, sheet]) => {
+      const data = sheets.map(([name, sh]) => {
+         const sheet = [...sh, ...sh, ...sh, ...sh];
          const columns = Object.keys(sheet[0]).map((v) => ({ v, bl: 1, ff: 1, fs: 10 }));
-         const rows = sheet.map((row) => Object.values(row).map((v) => ({ v })));
+         const rows = sheet.map((row) => Object.values(row).map((v) => ({ v: String(v).length * 10000 })));
+         const sumRow = columns.map(({ v }, i) => {
+            if (typeof sheet[0][v] === 'number') {
+               const sum = sheet.reduce((acc, row) => acc + row[v], 0);
+               return { v: sum, bl: 1, ff: 1, fs: 10 };
+            }
+            return { v: '', bl: 1, ff: 1, fs: 10 };
+         });
+
          const columnlen = Object.keys(sheet[0]).reduce((acc, v, i) => {
-            const max = Math.max(v.length, ...sheet.map((row) => String(row[v]).length));
-            return { ...acc, [i]: max * 10 };
+            const max = Math.max(...sheet.map((row) => String(row[v]).length), v.length, String(sumRow[i].v).length);
+            return { ...acc, [i]: max * 6 + 30 };
          }, {});
 
          return {
             name,
             data: [columns, ...rows],
-            frozen: { type: 'rows' },
+            frozen: { type: 'row' },
             config: { columnlen },
             filter_select: { row: [0, rows.length], column: [0, columns.length] },
          };
